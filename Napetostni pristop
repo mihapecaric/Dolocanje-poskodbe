@@ -1,0 +1,145 @@
+def komprimiranje(zač_zgod):
+    """
+    Komprimiramo podatke po 3-točkovni metodi, ostanejo samo še ekstremi.
+    """
+    while True:
+        i = 0
+        začetna_dolžina = len(zač_zgod)
+        while i< len(zač_zgod)-2:
+            if (zač_zgod[i+1] - zač_zgod[i]) * (zač_zgod[i+2] - zač_zgod[i+1]) >= 0:
+                zač_zgod = np.delete(zač_zgod,i+1)
+            i += 1  
+        if začetna_dolžina == len(zač_zgod):
+            break
+    return zač_zgod
+    
+sigma_dopr_neg_1 = 30
+sigma_dopr_0 = 45
+M = 2 * sigma_dopr_neg_1 / sigma_dopr_0 - 1
+
+def rainflow_ostanek(komp_zgod):
+    """
+    4-točkovna rainflow metoda, vrne seznam OD-DO vrednosti ciklov. 
+    Sešteje ostanek in ga komprimira.
+    Izračuna rainflow obremenitvene cikle iz ostanka.
+    """
+    delta = np.empty((0,2)) # pripravimo prazen seznam za shranjevanje obremenitvenih ciklov
+    ekvivalentne_nap = np.empty((0,1))
+    i = 0
+    while i <= len(komp_zgod)-4:
+        gor = komp_zgod[i+1] > komp_zgod[i] and komp_zgod[i+2] >= komp_zgod[i] and komp_zgod[i+3] >= komp_zgod[i+1]
+        dol = komp_zgod[i+1] < komp_zgod[i] and komp_zgod[i+2] <= komp_zgod[i] and komp_zgod[i+3] <= komp_zgod[i+1]
+        if gor or dol:
+            
+            delta = np.append(delta,[[komp_zgod[i+1],komp_zgod[i+2]]], 0) # 
+            komp_zgod = np.delete(komp_zgod, [i+1, i+2]) # izbrišemo popisane obremenitvene cikle
+            
+            # računanje apmlitude, srednje vrednosti in ekvivalentne napetosti obremenitvenega cikla:
+            sigma_a = np.abs((komp_zgod[i+1] - komp_zgod[i+2]) / 2)
+            sigma_m = (komp_zgod[i+1] + komp_zgod[i+2]) / 2
+            
+            if (sigma_a + sigma_m) < 0:
+                sigma_eq = (1 - M) * sigma_a
+            else:
+                sigma_eq = sigma_a + M * sigma_m
+                
+            ekvivalentne_nap = np.append(ekvivalentne_nap, sigma_eq)
+        
+            if i < 2: # če smo na manj kot drugi točki zgodovine, se premaknemo na začetek
+                i = 0
+            else:
+                i -= 2 # v nasprotnem primeru gremo za 2 točki nazaj
+        else:
+            i += 1 # če ne najdemo obremenitvenega cikla, se premaknemo na naslednjo točko
+    # Ostanek:
+    komp_zgod = np.append(komp_zgod, komp_zgod)
+    komp_zgod = komprimiranje(komp_zgod) # še enkrat komprimiramo
+    
+    while i <= len(komp_zgod)-4:
+        gor = komp_zgod[i+1] > komp_zgod[i] and komp_zgod[i+2] >= komp_zgod[i] and komp_zgod[i+3] >= komp_zgod[i+1]
+        dol = komp_zgod[i+1] < komp_zgod[i] and komp_zgod[i+2] <= komp_zgod[i] and komp_zgod[i+3] <= komp_zgod[i+1]
+        if gor or dol:
+            
+            delta = np.append(delta,[[komp_zgod[i+1],komp_zgod[i+2]]], 0)
+            komp_zgod = np.delete(komp_zgod, [i+1, i+2])
+            
+            # računanje apmlitude, srednje vrednosti in ekvivalentne napetosti obremenitvenega cikla:
+            sigma_a = np.abs((komp_zgod[i+1] - komp_zgod[i+2]) / 2)
+            sigma_m = (komp_zgod[i+1] + komp_zgod[i+2]) / 2
+            
+            if (sigma_a + sigma_m) < 0:
+                sigma_eq = (1 - M) * sigma_a
+            else:
+                sigma_eq = sigma_a + M * sigma_m
+                
+            ekvivalentne_nap = np.append(ekvivalentne_nap, sigma_eq)
+        
+            if i < 2:
+                i = 0
+            else:
+                i -= 2
+        else:
+            i += 1
+    return ekvivalentne_nap, delta
+    
+    def rainflow_brez_ostanka(komp_zgod):
+    """
+    4-točkovna rainflow metoda, vrne seznam OD-DO vrednosti ciklov. 
+    """
+    delta = np.empty((0,2))
+    ekvivalentne_nap = np.empty((0,1))
+    i = 0
+    while i <= len(komp_zgod)-4:
+        gor = komp_zgod[i+1] > komp_zgod[i] and komp_zgod[i+2] >= komp_zgod[i] and komp_zgod[i+3] >= komp_zgod[i+1]
+        dol = komp_zgod[i+1] < komp_zgod[i] and komp_zgod[i+2] <= komp_zgod[i] and komp_zgod[i+3] <= komp_zgod[i+1]
+        if gor or dol:
+            
+            delta = np.append(delta,[[komp_zgod[i+1],komp_zgod[i+2]]], 0) # 
+            komp_zgod = np.delete(komp_zgod, [i+1, i+2]) # izbrišemo popisane obremenitvene cikle
+            
+            # računanje apmlitude, srednje vrednosti in ekvivalentne napetosti obremenitvenega cikla:
+            sigma_a = np.abs((komp_zgod[i+1] - komp_zgod[i+2]) / 2)
+            sigma_m = (komp_zgod[i+1] + komp_zgod[i+2]) / 2
+            
+            if (sigma_a + sigma_m) < 0:
+                sigma_eq = (1 - M) * sigma_a
+            else:
+                sigma_eq = sigma_a + M * sigma_m
+                
+            ekvivalentne_nap = np.append(ekvivalentne_nap, sigma_eq)
+        
+            if i < 2:
+                i = 0
+            else:
+                i -= 2
+        else:
+            i += 1
+    return ekvivalentne_nap, delta
+    
+# Izračun poškodbe
+    
+N_tdt = 2e6
+A = 25.73
+B = -9.17
+sigma_tdt = 10**((np.log10(N_tdt) - A) / B)
+k = -B
+
+def izračun_poškodbe(sigma_eq, N_tdt, sigma_tdt, k):
+    N = 0
+    D = 0
+    q = k - 1
+    """
+    Funkcija izračuna vrednost poškodbe za podane ekvivalentne vrednosti napetosti obremenitvenih ciklov.
+    Funkcija zahteva še parametre N_tdt, sigma_tdt in k, ki so odvisni od obravnavanega materiala.
+    """
+    for i in range(len(sigma_eq)):
+        if sigma_eq[i] >= sigma_tdt:
+            Ni = N_tdt * (sigma_eq[i] / sigma_tdt)**(-k)
+        else:
+            Ni = N_tdt * (sigma_eq[i] / sigma_tdt)**-(k+q)
+        Di = 1 / Ni
+        N += Ni
+        # izračun poškodbe
+        D += Di
+    return D, N
+
